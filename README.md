@@ -4,7 +4,7 @@
 1. 下載或 clone 專案(download or clone the project)
 2. ## 安裝
 git clone https://github.com/ink-afk/GUYBar.git - > cd GUYBar - > npm install
-3. 建立 `.env` 並填入 Discord Bot Token：(create .env and enter your Discord Bot Token)
+3. ##建立 `.env` 並填入 Discord Bot Token：(create .env and enter your Discord Bot Token)
 TOKEN=你的BotToken <-(YourBotToken here)
 
 ## 指令列表
