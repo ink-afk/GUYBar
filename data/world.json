@@ -1,0 +1,17 @@
+{
+  "era": 1,
+  "currentRegion": "central",
+  "lastReset": "Thu Dec 18 2025",
+  "regions": {
+    "central": {
+      "name": "中央城邦",
+      "level": 1,
+      "bless": 21,
+      "target": 100,
+      "unlocked": true,
+      "buildings": [
+        "祈福壇"
+      ]
+    }
+  }
+}

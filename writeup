@@ -1,0 +1,32 @@
+# GUYBar Discord Bot — 系統設計與學習歷程
+
+## 專案目的
+建立一個互動型 Discord Bot，結合遊戲化任務與世界系統：
+- 日常行為追蹤（每日上香、發訊息、回覆、表情符號、打招呼）
+- 任務系統（隨機任務、固定任務、隱藏任務）
+- 世界系統（區域升級、香火累積）
+- 排行榜與獎勵機制
+- 特殊時間 Buff（午夜、週末）
+
+## 學習歷程
+- **Node.js & Discord.js**：學會事件監聽、訊息收集、指令處理。
+- **JSON 存取**：練習 loadJSON / saveJSON 管理本地資料。
+- **任務設計**：理解隨機任務生成、進度追蹤、防重事件處理。
+- **系統整合**：將世界系統、任務系統、獎勵機制整合為單一 Bot。
+- **特殊功能**：隱藏任務、午夜與週末 Buff，練習時間條件判斷與多條件觸發。
+- **程式設計概念**：模組化、單一職責原則、資料防重、批次存檔。
+
+## 系統架構
+index.js <- Discord Bot 主程式
+systems/
+├─ gameSystem.js <- 世界、任務、獎勵統一管理
+├─ utils.js <- 工具函式：loadJSON/saveJSON/today/progressBar
+├─ help.js <- 毒舌嚮導
+data/
+├─ world.json
+├─ users.json
+├─ cooldown.json
+├─ order.json
+├─ tasks.json
+├─ fixedTasksProgress.json
+└─ hiddenTasksProgress.json
