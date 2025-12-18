@@ -24,7 +24,7 @@ let cooldown = loadJSON(COOLDOWN_FILE, {});
 let order = loadJSON(ORDER_FILE, {});
 let taskData = loadJSON(TASK_FILE, { day: '', task: null });
 let fixedTaskProgress = loadJSON(FIXED_TASK_FILE, { day: '', users: {} });
-let hiddenTaskProgress = loadJSON(HIDDEN_TASK_FILE, {}); // 隱藏任務進度
+let hiddenTaskProgress = loadJSON(HIDDEN_TASK_FILE, {});
 
 // ===== 防重事件集 =====
 let processedEvents = new Set();
@@ -115,10 +115,9 @@ function handlePray(msg) {
   cooldown[uid] = Date.now();
   saveJSON(COOLDOWN_FILE, cooldown);
 
+  // 僅更新每日上香與地區香火
   users.dailyPray[uid] = (users.dailyPray[uid] || 0) + 1;
-  users.totalPray[uid] = (users.totalPray[uid] || 0) + 1;
-  saveJSON(USERS_FILE, users);
-
+  
   const region = world.regions[world.currentRegion];
   region.bless += 1;
   if (region.bless >= region.target) {
@@ -127,23 +126,12 @@ function handlePray(msg) {
     unlockNextRegion();
     msg.channel.send(`🏯 ${region.name} 升級至 Lv.${region.level}！`);
   }
+
+  saveJSON(USERS_FILE, users);
   saveJSON(WORLD_FILE, world);
 
   const pos = Object.keys(users.dailyPray).length;
-  msg.reply(`🕯 上香完成！你是今日第 ${pos} 位，累積 ${users.totalPray[uid]} 次`);
-
-  // 特殊隱藏任務：午夜
-  HIDDEN_TASKS.forEach(task => {
-    if (task.type === 'nightPray' && new Date().getHours() >= 22) {
-      hiddenTaskProgress[uid] = hiddenTaskProgress[uid] || {};
-      hiddenTaskProgress[uid][task.type] = (hiddenTaskProgress[uid][task.type] || 0) + 1;
-      if (hiddenTaskProgress[uid][task.type] >= task.goal) {
-        grantReward(msg, uid, task.reward, `隱藏任務完成：「${task.desc}」`);
-        hiddenTaskProgress[uid][task.type] = 0;
-      }
-    }
-  });
-  saveJSON(HIDDEN_TASK_FILE, hiddenTaskProgress);
+  msg.reply(`🕯 上香完成！你是今日第 ${pos} 位，累積 ${users.totalPray[uid] || 0} 次`);
 }
 
 // ===== 任務處理 =====
@@ -157,7 +145,9 @@ function handleTasks(msg, context = 'message') {
   // 隨機任務
   if (taskData.task.type === context) {
     taskData.task.progress[uid] = (taskData.task.progress[uid] || 0) + 1;
-    if (taskData.task.progress[uid] >= taskData.task.goal) grantReward(msg, uid, taskData.task.reward, '隨機任務完成');
+    if (taskData.task.progress[uid] >= taskData.task.goal) {
+      grantReward(msg, uid, taskData.task.reward, '隨機任務完成');
+    }
     saveJSON(TASK_FILE, taskData);
   }
 
@@ -175,10 +165,17 @@ function handleTasks(msg, context = 'message') {
   });
   saveJSON(FIXED_TASK_FILE, fixedTaskProgress);
 
-  // 隱藏訊息任務
+  // 隱藏任務
+  hiddenTaskProgress[uid] = hiddenTaskProgress[uid] || {};
   HIDDEN_TASKS.forEach(task => {
     if (task.type === 'secretMessage' && msg.content.includes('寶')) {
-      hiddenTaskProgress[uid] = hiddenTaskProgress[uid] || {};
+      hiddenTaskProgress[uid][task.type] = (hiddenTaskProgress[uid][task.type] || 0) + 1;
+      if (hiddenTaskProgress[uid][task.type] >= task.goal) {
+        grantReward(msg, uid, task.reward, `隱藏任務完成：「${task.desc}」`);
+        hiddenTaskProgress[uid][task.type] = 0;
+      }
+    }
+    if (task.type === 'nightPray' && context === 'pray' && new Date().getHours() >= 22) {
       hiddenTaskProgress[uid][task.type] = (hiddenTaskProgress[uid][task.type] || 0) + 1;
       if (hiddenTaskProgress[uid][task.type] >= task.goal) {
         grantReward(msg, uid, task.reward, `隱藏任務完成：「${task.desc}」`);
@@ -187,6 +184,13 @@ function handleTasks(msg, context = 'message') {
     }
   });
   saveJSON(HIDDEN_TASK_FILE, hiddenTaskProgress);
+
+  // 統一更新 totalPray
+  if (context === 'pray') {
+    const buff = getCurrentBuff();
+    users.totalPray[uid] = (users.totalPray[uid] || 0) + 1 * buff.multiplier;
+    saveJSON(USERS_FILE, users);
+  }
 }
 
 // ===== 顯示任務/世界 =====
@@ -210,6 +214,7 @@ module.exports = {
   checkDailyReset, handlePray, showRanking, showWorld, showMap,
   handleTasks, showTodayTask, showTaskProgress, showFixedTaskProgress, grantReward
 };
+
 /*
 const fs = require('fs');
 const path = require('path');
