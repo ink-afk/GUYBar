@@ -28,6 +28,5 @@ TOKEN=你的DiscordBotToken
 node index.js
 ``
 
-## 瘜冽�鈭�(Note:)
-- 隢�芷 `data/` 鋆∠� JSON 瑼��血���蝵格��脣漲(if delete your json file in data/ you would lost all your process)
+(if delete your json file in data/ you would lost all your process)
 >>>>>>> 0a3e8a41a10415ca3b9f42a68ed6f7ed070b79e2
