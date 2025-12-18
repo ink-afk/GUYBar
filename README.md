@@ -29,4 +29,4 @@ node index.js
 ``
 
 (if delete your json file in data/ you would lost all your process)
->>>>>>> 0a3e8a41a10415ca3b9f42a68ed6f7ed070b79e2
+>>>>>>> 
