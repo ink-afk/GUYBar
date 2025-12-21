@@ -1,0 +1,59 @@
+{
+  "era": 2,
+  "lastReset": "2025-12-21",
+  "currentRegion": "central",
+  "regions": {
+    "central": {
+      "name": "蓋幫總基地",
+      "level": 3,
+      "bless": 20,
+      "target": 550,
+      "unlocked": true,
+      "buildings": [
+        "祈福壇",
+        "香火塔",
+        "靈氣泉"
+      ]
+    },
+    "region_2": {
+      "name": "東境荒原",
+      "level": 1,
+      "bless": 0,
+      "target": 100,
+      "unlocked": true,
+      "buildings": [
+        "古樹守護壇"
+      ]
+    },
+    "region_3": {
+      "name": "西方大漠",
+      "level": 1,
+      "bless": 0,
+      "target": 100,
+      "unlocked": true,
+      "buildings": [
+        "沙暴堡壘"
+      ]
+    },
+    "region_4": {
+      "name": "北方冰原",
+      "level": 1,
+      "bless": 0,
+      "target": 100,
+      "unlocked": true,
+      "buildings": [
+        "永凍神殿"
+      ]
+    },
+    "region_5": {
+      "name": "南方群島",
+      "level": 1,
+      "bless": 0,
+      "target": 100,
+      "unlocked": true,
+      "buildings": [
+        "海神燈塔"
+      ]
+    }
+  }
+}
