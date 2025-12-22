@@ -1,4 +1,4 @@
-// systems/gameSystem.js - 最終完整優化版（已加入探索系統 + 恢復所有原有函數）
+// systems/gameSystem.js - 最終完整版（探索系統完整加入）
 const fs = require('fs');
 const path = require('path');
 const { loadJSON, saveJSON, today, progressBar } = require('./utils');
@@ -90,12 +90,14 @@ function checkDailyReset() {
     cooldown = {};
     order = {};
     processedEvents.clear();
-    // 體力每日恢復
+
+    // 體力每日恢復滿值
     Object.keys(stamina).forEach(uid => {
-      stamina[uid].current = stamina[uid].max;
+      stamina[uid].current = stamina[uid].max || 10;
       stamina[uid].lastReset = todayStr;
     });
     saveJSON(STAMINA_FILE, stamina);
+
     changed = true;
   }
 
@@ -255,13 +257,14 @@ const NPC_EVENTS = [
 // ===== 探索指令 =====
 async function handleExplore(msg) {
   const uid = msg.author.id;
+
   if (world.currentRegion === 'central') {
     return msg.reply('主城純潔聖地，沒有探索事件');
   }
 
   const userStamina = getStamina(uid);
   if (userStamina.current <= 0) {
-    return msg.reply('體力不足，請明天再來探索');
+    return msg.reply(`體力不足（${userStamina.current}/${userStamina.max}），明天自動恢復`);
   }
 
   userStamina.current -= 1;
@@ -270,9 +273,9 @@ async function handleExplore(msg) {
   const region = world.regions[world.currentRegion];
   const buildingCount = region.buildings.length - 1;
 
-  // NPC事件觸發率（建築加成）
+  // NPC事件觸發率（建築越多越高）
   const npcChance = 0.3 + buildingCount * 0.1;
-  if (Math.random() < npcChance) {
+  if (Math.random() < npcChance && NPC_EVENTS.length > 0) {
     const event = NPC_EVENTS[Math.floor(Math.random() * NPC_EVENTS.length)];
 
     const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -286,7 +289,7 @@ async function handleExplore(msg) {
       }
       row.addComponents(
         new ButtonBuilder()
-          .setCustomId(`explore_${uid}_${i}`)
+          .setCustomId(`explore_npc_${uid}_${i}`)
           .setLabel(opt.text)
           .setStyle(ButtonStyle.Primary)
       );
@@ -305,10 +308,15 @@ async function handleExplore(msg) {
   }
 
   // 一般事件
-  const reward = 5 + buildingCount * 3;
+  const baseReward = 5 + buildingCount * 3;
+  const isGood = Math.random() < 0.6 + buildingCount * 0.1;
+  const reward = isGood ? baseReward : -Math.floor(baseReward / 2);
+
   users.totalContrib[uid] += reward;
   saveJSON(USERS_FILE, users);
-  msg.reply(`探索成功！發現資源，獲得 ${reward} 幫貢\n體力剩餘：${userStamina.current}/${userStamina.max}`);
+
+  const resultText = isGood ? '發現資源！獲得' : '遭遇小麻煩，損失';
+  msg.reply(`${resultText} ${Math.abs(reward)} 幫貢\n體力剩餘：${userStamina.current}/${userStamina.max}`);
 }
 
 // 每日簽到
