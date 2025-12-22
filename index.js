@@ -34,7 +34,10 @@ const {
   grantReward,
   checkDailyReset,
   progressBar,
-  getWorld
+  getWorld,
+  handleExplore,
+  getStamina,
+  users  // 用於 NPC 事件扣/加幫貢
 } = require('./systems/gameSystem');
 
 const { showBotGuide } = require('./systems/help');
@@ -63,7 +66,7 @@ const commands = new Map([
   ['!機器人', showBotGuide],
   ['!ㄐㄐ人', showBotGuide],
 
-  // !據點（保持原樣）
+  // !據點
   ['!據點', async (msg) => {
     try {
       const args = msg.content.trim().split(' ').slice(1).join(' ').toLowerCase();
@@ -135,17 +138,16 @@ const commands = new Map([
     });
   }],
 
-  // !探索（新指令）
+  // !探索
   ['!探索', async (msg) => {
-    const uid = msg.author.id;
-    handleExplore(msg, uid);
+    await handleExplore(msg);
   }],
 
-  // !體力（查看體力）
+  // !體力
   ['!體力', (msg) => {
     const uid = msg.author.id;
-    const userStamina = getStamina(uid);
-    msg.reply(`你的體力：${userStamina.current}/${userStamina.max}\n（每日自動恢復滿值）`);
+    const s = getStamina(uid);
+    msg.reply(`你的體力：${s.current}/${s.max}\n（每日自動恢復滿值）`);
   }],
 ]);
 
@@ -155,11 +157,11 @@ client.once('ready', () => {
   client.user.setActivity('!機器人 查看指令', { type: 'PLAYING' });
 });
 
-// 按鈕交互處理（包含切換據點與探索NPC選擇）
+// 按鈕交互處理（切換據點 + 探索NPC選擇）
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 
-  // 切換據點按鈕
+  // 切換據點
   if (interaction.customId.startsWith('switch_')) {
     const regionKey = interaction.customId.replace('switch_', '');
 
@@ -190,30 +192,32 @@ client.on('interactionCreate', async (interaction) => {
     await interaction.message.edit({ components: newRows });
   }
 
-  // 探索NPC選擇按鈕
-  if (interaction.customId.startsWith('explore_')) {
-    const [, uid, choice] = interaction.customId.split('_');
+  // 探索NPC選擇
+  if (interaction.customId.startsWith('explore_npc_')) {
+    const [, uid, choiceIndex] = interaction.customId.split('_');
     if (interaction.user.id !== uid) {
       return interaction.reply({ content: '這不是你的探索事件', ephemeral: true });
     }
 
     const temp = world.tempExplore?.[uid];
-    if (!temp) return interaction.reply({ content: '事件已過期', ephemeral: true });
+    if (!temp) {
+      return interaction.reply({ content: '事件已過期', ephemeral: true });
+    }
 
-    const opt = temp.event.options[parseInt(choice)];
+    const opt = temp.event.options[parseInt(choiceIndex)];
     let result = `你選擇：${opt.text}\n${opt.message}`;
 
     if (opt.result === 'good') {
-      users.totalContrib[uid] += opt.reward;
+      users[uid] = (users[uid] || 0) + opt.reward;
       result += `\n獲得 ${opt.reward} 幫貢`;
     } else if (opt.result === 'bad') {
-      users.totalContrib[uid] -= opt.penalty;
+      users[uid] = (users[uid] || 0) - opt.penalty;
       result += `\n損失 ${opt.penalty} 幫貢`;
     }
 
-    saveJSON(USERS_FILE, users);
+    saveJSON(path.join(__dirname, 'data', 'users.json'), users);
     delete world.tempExplore[uid];
-    saveJSON(WORLD_FILE, world);
+    saveJSON(path.join(__dirname, 'data', 'world.json'), world);
 
     await interaction.update({ content: result, components: [] });
   }
